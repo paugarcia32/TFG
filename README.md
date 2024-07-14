@@ -12,4 +12,13 @@ git clone https://github.com/paugarcia32/TFG.git
 ```
 
 
+## Acknowledgements
+
+Teachers involved
+- [Carles Gomez Montenegro](https://futur.upc.edu/CarlosGomezMontenegro)
+- [Lluis Casals Ibañez](https://futur.upc.edu/LluisCasalsIbanez)
+- [Rafael Vidal Ferre](https://futur.upc.edu/RafaelVidalFerre)
+
+
+<br></br>
 [![EETAC](https://eetac.upc.edu/ca/noticies/eetac.png/@@images/image)](https://eetac.upc.edu)
