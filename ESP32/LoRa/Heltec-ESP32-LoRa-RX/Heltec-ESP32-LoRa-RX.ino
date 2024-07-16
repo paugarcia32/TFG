@@ -68,4 +68,3 @@ void loop() {
 
 // Can't do Serial or display things here, takes too much time for the interrupt
 void rx() { rxFlag = true; }
-oid rx() { rxFlag = true; }
