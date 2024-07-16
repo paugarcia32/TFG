@@ -1,6 +1,7 @@
 
 /**
- * Receiver Code: Receives LoRa packets and displays RSSI and SNR.
+ * Receiver Code: Receives LoRa packets and displays the string along with RSSI
+ * and SNR.
  */
 
 // Turns the 'PRG' button into the power button, long press is off
@@ -31,6 +32,7 @@ void setup() {
   RADIOLIB_OR_HALT(radio.begin());
   // Set the callback function for received packets
   radio.setDio1Action(rx);
+  // Set radio parameters
   both.printf("Frequency: %.2f MHz\n", FREQUENCY);
   RADIOLIB_OR_HALT(radio.setFrequency(FREQUENCY));
   both.printf("Bandwidth: %.1f kHz\n", BANDWIDTH);
@@ -54,6 +56,11 @@ void loop() {
       both.printf("RX [%s]\n", rxdata.c_str());
       both.printf("  RSSI: %.2f dBm\n", radio.getRSSI());
       both.printf("  SNR: %.2f dB\n", radio.getSNR());
+      display.clear();
+      display.drawString(0, 0, "RX: " + rxdata);
+      display.drawString(0, 10, "RSSI: " + String(radio.getRSSI()) + " dBm");
+      display.drawString(0, 20, "SNR: " + String(radio.getSNR()) + " dB");
+      display.display();
     }
     RADIOLIB_OR_HALT(radio.startReceive(RADIOLIB_SX126X_RX_TIMEOUT_INF));
   }
@@ -61,3 +68,4 @@ void loop() {
 
 // Can't do Serial or display things here, takes too much time for the interrupt
 void rx() { rxFlag = true; }
+oid rx() { rxFlag = true; }

@@ -1,7 +1,7 @@
 
 /**
- * Transmitter Code: Sends LoRa packets with a sequence number and displays
- * status on screen.
+ * Transmitter Code: Sends LoRa packets with a custom string and displays status
+ * on screen.
  */
 
 // Turns the 'PRG' button into the power button, long press is off
@@ -30,6 +30,9 @@ long counter = 0;
 uint64_t last_tx = 0;
 uint64_t tx_time;
 uint64_t minimum_pause;
+
+// Custom message to send
+String customMessage = "Hello, this is a test message";
 
 void setup() {
   heltec_setup();
@@ -65,13 +68,14 @@ void loop() {
       display.display();
       return;
     }
-    both.printf("TX [%s] ", String(counter).c_str());
+    String messageToSend = customMessage + " [" + String(counter) + "]";
+    both.printf("TX [%s] ", messageToSend.c_str());
     display.clear();
     display.drawString(0, 0, "TX [" + String(counter) + "]");
     radio.clearDio1Action();
     heltec_led(50); // 50% brightness is plenty for this LED
     tx_time = millis();
-    RADIOLIB(radio.transmit(String(counter++).c_str()));
+    RADIOLIB(radio.transmit(messageToSend.c_str()));
     tx_time = millis() - tx_time;
     heltec_led(0);
     if (_radiolib_status == RADIOLIB_ERR_NONE) {
@@ -85,5 +89,6 @@ void loop() {
     // Maximum 1% duty cycle
     minimum_pause = tx_time * 100;
     last_tx = millis();
+    counter++;
   }
 }
