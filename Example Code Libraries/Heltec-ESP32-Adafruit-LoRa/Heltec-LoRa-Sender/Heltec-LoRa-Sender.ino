@@ -1,117 +1,114 @@
 
-
-// Libraries for LoRa
-#include <LoRa.h>
-#include <SPI.h>
-
-// // Libraries for OLED Display
-// #include <Adafruit_GFX.h>
-// #include <Adafruit_SSD1306.h>
-// #include <Wire.h>
+/**
+ * Send and receive LoRa-modulation packets with a sequence number, showing RSSI
+ * and SNR for received packets on the little display.
+ *
+ * Note that while this send and received using LoRa modulation, it does not do
+ * LoRaWAN. For that, see the LoRaWAN_TTN example.
+ *
+ * This works on the stick, but the output on the screen gets cut off.
+ */
 
 // Turns the 'PRG' button into the power button, long press is off
 #define HELTEC_POWER_BUTTON // must be before "#include <heltec_unofficial.h>"
-
-// Uncomment this if you have Wireless Stick v3
-// #define HELTEC_WIRELESS_STICK
-
-// creates 'radio', 'display' and 'button' instances
 #include <heltec_unofficial.h>
 
-// define the pins used by the LoRa transceiver module
-#define SCK 5
-#define MISO 19
-#define MOSI 27
-#define SS 18
-#define RST 14
-#define DIO0 26
+// Pause between transmited packets in seconds.
+// Set to zero to only transmit a packet when pressing the user button
+// Will not exceed 1% duty cycle, even if you set a lower value.
+#define PAUSE 300
 
-// 433E6 for Asia
-// 866E6 for Europe
-// 915E6 for North America
-#define BAND 866E6
+// Frequency in MHz. Keep the decimal point to designate float.
+// Check your own rules and regulations to see what is legal where you are.
+#define FREQUENCY 866.3 // for Europe
+// #define FREQUENCY           905.2       // for US
 
-// OLED pins
-#define OLED_SDA 4
-#define OLED_SCL 15
-#define OLED_RST 16
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+// LoRa bandwidth. Keep the decimal point to designate float.
+// Allowed values are 7.8, 10.4, 15.6, 20.8, 31.25, 41.7, 62.5, 125.0, 250.0 and
+// 500.0 kHz.
+#define BANDWIDTH 250.0
 
-// packet counter
-int counter = 0;
+// Number from 5 to 12. Higher means slower but higher "processor gain",
+// meaning (in nutshell) longer range and more robust against interference.
+#define SPREADING_FACTOR 9
 
-// Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST);
+// Transmit power in dBm. 0 dBm = 1 mW, enough for tabletop-testing. This value
+// can be set anywhere between -9 dBm (0.125 mW) to 22 dBm (158 mW). Note that
+// the maximum ERP (which is what your antenna maximally radiates) on the EU ISM
+// band is 25 mW, and that transmissting without an antenna can damage your
+// hardware.
+#define TRANSMIT_POWER 0
+
+String rxdata;
+volatile bool rxFlag = false;
+long counter = 0;
+uint64_t last_tx = 0;
+uint64_t tx_time;
+uint64_t minimum_pause;
 
 void setup() {
-  // initialize Serial Monitor
-  Serial.begin(115200);
-
-  // reset OLED display via software
-  pinMode(OLED_RST, OUTPUT);
-  digitalWrite(OLED_RST, LOW);
-  delay(20);
-  digitalWrite(OLED_RST, HIGH);
-
-  // initialize OLED
-  // Wire.begin(OLED_SDA, OLED_SCL);
-  // if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3c, false,
-  //                    false)) { // Address 0x3C for 128x32
-  //   Serial.println(F("SSD1306 allocation failed"));
-  //   for (;;)
-  //     ; // Don't proceed, loop forever
-  // }
-
-  // display.clearDisplay();
-  // display.setTextColor(WHITE);
-  // display.setTextSize(1);
-  // display.setCursor(0, 0);
-  // display.print("LORA SENDER ");
-  // display.display();
-
-  Serial.println("LoRa Sender Test");
-
-  // SPI LoRa pins
-  SPI.begin(SCK, MISO, MOSI, SS);
-  // setup LoRa transceiver module
-  LoRa.setPins(SS, RST, DIO0);
-
-  if (!LoRa.begin(BAND)) {
-    Serial.println("Starting LoRa failed!");
-    while (1)
-      ;
-  }
-  Serial.println("LoRa Initializing OK!");
-  // display.setCursor(0, 10);
-  display.print("LoRa Initializing OK!");
-  display.display();
-  delay(2000);
+  heltec_setup();
+  both.println("Radio init");
+  RADIOLIB_OR_HALT(radio.begin());
+  // Set the callback function for received packets
+  radio.setDio1Action(rx);
+  // Set radio parameters
+  both.printf("Frequency: %.2f MHz\n", FREQUENCY);
+  RADIOLIB_OR_HALT(radio.setFrequency(FREQUENCY));
+  both.printf("Bandwidth: %.1f kHz\n", BANDWIDTH);
+  RADIOLIB_OR_HALT(radio.setBandwidth(BANDWIDTH));
+  both.printf("Spreading Factor: %i\n", SPREADING_FACTOR);
+  RADIOLIB_OR_HALT(radio.setSpreadingFactor(SPREADING_FACTOR));
+  both.printf("TX power: %i dBm\n", TRANSMIT_POWER);
+  RADIOLIB_OR_HALT(radio.setOutputPower(TRANSMIT_POWER));
+  // Start receiving
+  RADIOLIB_OR_HALT(radio.startReceive(RADIOLIB_SX126X_RX_TIMEOUT_INF));
 }
 
 void loop() {
+  heltec_loop();
 
-  Serial.print("Sending packet: ");
-  Serial.println(counter);
+  bool tx_legal = millis() > last_tx + minimum_pause;
+  // Transmit a packet every PAUSE seconds or when the button is pressed
+  if ((PAUSE && tx_legal && millis() - last_tx > (PAUSE * 1000)) ||
+      button.isSingleClick()) {
+    // In case of button click, tell user to wait
+    if (!tx_legal) {
+      both.printf("Legal limit, wait %i sec.\n",
+                  (int)((minimum_pause - (millis() - last_tx)) / 1000) + 1);
+      return;
+    }
+    both.printf("TX [%s] ", String(counter).c_str());
+    radio.clearDio1Action();
+    heltec_led(50); // 50% brightness is plenty for this LED
+    tx_time = millis();
+    RADIOLIB(radio.transmit(String(counter++).c_str()));
+    tx_time = millis() - tx_time;
+    heltec_led(0);
+    if (_radiolib_status == RADIOLIB_ERR_NONE) {
+      both.printf("OK (%i ms)\n", (int)tx_time);
+    } else {
+      both.printf("fail (%i)\n", _radiolib_status);
+    }
+    // Maximum 1% duty cycle
+    minimum_pause = tx_time * 100;
+    last_tx = millis();
+    radio.setDio1Action(rx);
+    RADIOLIB_OR_HALT(radio.startReceive(RADIOLIB_SX126X_RX_TIMEOUT_INF));
+  }
 
-  // Send LoRa packet to receiver
-  LoRa.beginPacket();
-  LoRa.print("hello ");
-  LoRa.print(counter);
-  LoRa.endPacket();
-
-  // display.clearDisplay();
-  // display.setCursor(0, 0);
-  Serial.println("LORA SENDER");
-  // display.setCursor(0, 20);
-  // display.setTextSize(1);
-  Serial.println("LoRa packet sent.");
-  // display.setCursor(0, 30);
-  Serial.println("Counter:");
-  // display.setCursor(50, 30);
-  Serial.println(counter);
-  // display.display();
-
-  counter++;
-
-  delay(10000);
+  // If a packet was received, display it and the RSSI and SNR
+  if (rxFlag) {
+    rxFlag = false;
+    radio.readData(rxdata);
+    if (_radiolib_status == RADIOLIB_ERR_NONE) {
+      both.printf("RX [%s]\n", rxdata.c_str());
+      both.printf("  RSSI: %.2f dBm\n", radio.getRSSI());
+      both.printf("  SNR: %.2f dB\n", radio.getSNR());
+    }
+    RADIOLIB_OR_HALT(radio.startReceive(RADIOLIB_SX126X_RX_TIMEOUT_INF));
+  }
 }
+
+// Can't do Serial or display things here, takes too much time for the interrupt
+void rx() { rxFlag = true; }
