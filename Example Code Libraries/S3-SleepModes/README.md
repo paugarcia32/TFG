@@ -4,6 +4,8 @@ Simple Sleep Mode code from the ESP32 example codes, where we can see how works 
 
 ## Example
 
+![sleepmode](https://github.com/user-attachments/assets/5f0aa5ee-36a4-48f2-91c4-e403ce914545)
+
 ## Reference
 
 - [RandomNerdTutorials](https://randomnerdtutorials.com/esp32-deep-sleep-arduino-ide-wake-up-sources/)
