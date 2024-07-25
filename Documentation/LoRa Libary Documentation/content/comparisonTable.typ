@@ -1,27 +1,44 @@
 #let comparisonTable = [
 
-#show table.cell.where(y: 0): set text(weight: "bold")
+  #show table.cell.where(y: 0): set text(weight: "bold")
+  #set table(align: (x, _) => if x == 0 { left } else { center })
 
-#figure(
-  table(
-    align: center,
-    stroke: none,
-    inset: 10pt,
-    columns: 4,
-    table.header(
-      [Library],
-      [Freqiency (Hz)],
-      [Spreading Factor],
-      [$P_(text("tx"))$ (W)]
+  #figure(
+    table(
+      stroke: none,
+      inset: 10pt,
+      columns: 4,
+      table.hline(y: 1),
+      table.vline(x: 1),
+
+      table.header([],[Unnoficial Heltec],[Arduino LoRa],[RadioLib]),
+      [Frequency (MHz)], [☒], [☒], [☒],
+      [Spreading Factor], [☒], [☒], [☒],
+      [Signal Bandwidth (KHz)], [☒], [☒], [☒],
+      [Coding Rate], [], [☒], [☒],
+      [Preamble Length (bits)], [], [☒], [☒],
+      [$P_(text("tx"))$ (dBm)], [☒], [☒], [☒],
+      [Bus Type], [SPI], [SPI], [SPI],
+      [Callbacks (Channel Activity Detection)], [☒], [☒], [],
+      [Implicit / Explicit Header], [], [☒], [☒],
+      [Write data to the packet], [☒], [☒], [☒],
+      [RSSI], [], [☒], [☒],
+      [SNR], [], [☒], [],
+      [Packet Frequency Error], [], [☒], [],
+      [Radio modes], [], [Idle \ Sleep], [],
+      [Sync word], [], [☒], [☒],
+      [CRC], [], [☒], [☒],
+      [Invert IQ signals], [], [☒], [],
+      [LNA gain], [], [☒], [],
+
     ),
-    table.hline(start: 0),
-    [*Unnoficial Heltec* @heltec_esp32_lora_v3], [☒], [☐], [],
-    [*Arduino LoRa* @arduino_lora],  [16.6], [104], [],
-    [*RadioLib* @radiolib], [], [24.7], [],
-  ), caption: "Library Table Comparison",
-
-) <comparisonTable>
+    caption: "Library Table Comparison",
+  ) <comparisonTable2>
 ]
+
+
+
+
 
 
 

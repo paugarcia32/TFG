@@ -20,12 +20,12 @@
 
   == Arduino LoRa <inoLora>
   #par[
-
+    In second place, we have the Arduino LoRa library @arduino_lora. This library is also an unofficial library maintained by the comunity, which allows the Semtech SX1276/77/78/79 based boards.
   ]
 
   == RadioLib <RadioLib>
   #par[
-
+    In last place, we have the RadioLib library @radiolib. RadioLib allows its users to integrate all sorts of different wireless communication modules & protocols into a single system.
   ]
 
   #comparisonTable
