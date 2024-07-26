@@ -1,6 +1,8 @@
 #import "conf.typ": conf
 #import "content/intro.typ": intro
 #import "content/comparisonContent.typ": comparisonContent
+#import "acronyms.typ": acronymList
+
 
 #show: doc => conf(
   title: [
@@ -22,8 +24,6 @@
 
 #intro
 #comparisonContent
-
-
 
 
 

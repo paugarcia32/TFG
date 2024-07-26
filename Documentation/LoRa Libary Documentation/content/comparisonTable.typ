@@ -33,7 +33,7 @@
 
     ),
     caption: "Library Table Comparison",
-  ) <comparisonTable2>
+  ) <comparisonTable>
 ]
 
 

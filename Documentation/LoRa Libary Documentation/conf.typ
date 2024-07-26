@@ -1,3 +1,5 @@
+#import "acronyms.typ": acronymList
+#import "@preview/acrotastic:0.1.0": *
 #let conf(
   title: none,
   authors: (),
@@ -89,4 +91,9 @@
 
   pagebreak()
   bibliography("sources.bib")
+
+pagebreak()
+acronymList
+
+
 }
