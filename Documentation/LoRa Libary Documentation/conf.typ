@@ -22,30 +22,30 @@
   set text(font: body-font, lang: "en")
   show heading: set text(font: sans-font)
 
-
-
-
-  set text( font: sans-font )
+  set text(font: sans-font)
 
   set heading(numbering: "1.")
 
-  set page(header: context {
-    if counter(page).get().first() > 1 [
-      #authors_list
-    #h(1fr)
-    UPC
-    ]
-  })
+set page(
+    header: context {
+      set text(fill: gray);
+      if counter(page).get().first() > 1 [
+        #authors_list
+        #h(1fr)
+        UPC
+      ];
+    },
+        footer: context {
+      if counter(page).get().first() > 1 [
+        #h(1fr)
+        #counter(page).display()
+      ];
+    },
 
-  set page(footer: context {
-    if counter(page).get().first() > 1 [
-      #h(1fr)
-      #counter(page).display()
-    ]
-  })
+  );
 
-// ------------------------------------------------------ //
-
+  set par(linebreaks: "optimized", leading: 0.65em)
+  // ------------------------------------------------------ //
 
   // Title page.
   // The page can contain a logo if you pass one with `logo: "logo.png"`.
@@ -55,8 +55,7 @@
   }
   v(9.6fr)
 
-
- text(font: sans-font, 2em, weight: 700, title)
+  text(font: sans-font, 2em, weight: 700, title)
 
   // Author information.
   pad(
@@ -76,15 +75,13 @@
   v(2.4fr)
   pagebreak()
 
-// ------------------------------------------------------ //
+  // ------------------------------------------------------ //
 
   // Table of contents.
-  outline(title: "Table of Contents", target: heading, depth: 3, indent: 2em,)
-
+  outline(title: "Table of Contents", target: heading, depth: 3, indent: 2em)
 
   pagebreak()
-// ------------------------------------------------------ //
-
+  // ------------------------------------------------------ //
 
   set align(left)
   columns(1, doc)
@@ -92,8 +89,6 @@
   pagebreak()
   bibliography("sources.bib")
 
-pagebreak()
-acronymList
-
-
+  pagebreak()
+  acronymList
 }

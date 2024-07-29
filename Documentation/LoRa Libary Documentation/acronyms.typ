@@ -10,15 +10,6 @@
   ("LNA", "Low-Noise Amplifier")
 )
 
-#let acronymList2 = [
-  #show heading: set heading(numbering: none)
-  = Acronyms
-
-  #for (acronym, meaning) in acronyms [
-    #acronym: #meaning \
-  ]
-]
-
 
 #let acronymList = [
   #show heading: set heading(numbering: none)
@@ -30,7 +21,7 @@
   inset: 10pt,
   table.hline(y: 1),
   table.vline(x: 1),
-  table.header([Acronym],[Meaning]),
+  table.header([*Acronym*],[*Meaning*]),
   ..for (acronym, meaning) in acronyms {
     (acronym, meaning)
   }

@@ -3,6 +3,7 @@
   #show table.cell.where(y: 0): set text(weight: "bold")
   #set table(align: (x, _) => if x == 0 { left } else { center })
 
+  == Comparison table
   #figure(
     table(
       stroke: none,

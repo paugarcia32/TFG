@@ -3,7 +3,6 @@
 #import "content/comparisonContent.typ": comparisonContent
 #import "acronyms.typ": acronymList
 
-
 #show: doc => conf(
   title: [
     Libraries Documentation
@@ -20,11 +19,5 @@
   doc,
 )
 
-
-
 #intro
 #comparisonContent
-
-
-
-
