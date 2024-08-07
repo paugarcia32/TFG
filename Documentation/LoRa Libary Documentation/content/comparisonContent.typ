@@ -1,4 +1,5 @@
 #import "comparisonTable.typ": comparisonTable
+#import "otherParamsTable.typ": otherParamsTable
 
 
 
@@ -38,6 +39,36 @@ table(
   )
 
 ]
+
+
+#let loraMeshModules = (
+  ("SX126x", "series LoRa modules (SX1262, SX1268)"),
+  ("SX127x", "series LoRa modules (SX1276, SX1278)"),
+  ("SX128x", "series LoRa/GFSK/BLE/FLRC modules (SX1280)"),
+)
+
+#let loraMeshbModulesList = [
+  #show heading: set heading()
+  #show table.cell.where(y: 0): set text(weight: "bold")
+  === RadioLib Modules
+  #pad()[]
+  #figure(
+table(
+    columns: (20%, 80%),
+    stroke: none,
+    inset: 10pt,
+    table.hline(y: 1),
+    table.vline(x: 1),
+    table.header([Module], [Description]),
+    ..for (module, desc) in loraMeshModules {
+      (module, desc)
+    }
+  ), caption: "Lora Mesher Modules List",
+  )
+
+]
+
+
 
 #let inoModules = (
   ("SX127x", "series LoRa modules (SX1272, SX1273, SX1276, SX1277, SX1278, SX1279)"),
@@ -127,14 +158,23 @@ table(
   #pad()[]
 
   #par[
-    In last place, we have the `RadioLib library` @radiolib. `RadioLib` allows its users to integrate all sorts of different wireless communication modules & protocols into a single system.
+    In third place, we have the `RadioLib library` @radiolib. `RadioLib` allows its users to integrate all sorts of different wireless communication modules & protocols into a single system.
   ]
     #par[
     RadioLib natively supports Arduino, but can run in non-Arduino environments as well.
   ]
 
-
   #radiolibModulesList
 
+  == Lora Mesher <LoRa_Mesh>
+    #pad()[]
+  #par[
+    In last place, we have the `LoRa Mesher library` @9930341, which as the Unnoficial Heltec @heltec_esp32_lora_v3, also uses the #link("https://github.com/ropg/heltec_esp32_lora_v3?tab=readme-ov-file#radiolib")[`RadioLib`] @radiolib library to handle the low level communication to the different LoRa modules.
+  ]
+
+  #loraMeshbModulesList
+
   #comparisonTable
+
+  #otherParamsTable
 ]
