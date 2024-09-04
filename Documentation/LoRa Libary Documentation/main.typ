@@ -13,7 +13,6 @@
       affiliation: "EETAC - UPC",
       email: "paugarcia32@gmail.com",
     ),
-
   ),
   logo: "assets/logos/eetac.png",
   doc,
