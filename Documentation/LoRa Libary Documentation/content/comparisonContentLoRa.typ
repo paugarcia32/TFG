@@ -124,8 +124,8 @@ table(
 ]
 
 
-#let comparisonContent = [
-  = Comparison Between Libraries
+#let comparisonContentLoRa = [
+  = Comparison Between Libraries LoRa Libraries
   #pad()[]
   #par[
     As of today, I have found only three different libraries that allow Arduino to use LoRa, either using embedded LoRa modules or external modules.
@@ -165,16 +165,10 @@ table(
   ]
 
   #radiolibModulesList
-
-  == Lora Mesher <LoRa_Mesh>
-    #pad()[]
-  #par[
-    In last place, we have the `LoRa Mesher library` @9930341, which as the Unnoficial Heltec @heltec_esp32_lora_v3, also uses the #link("https://github.com/ropg/heltec_esp32_lora_v3?tab=readme-ov-file#radiolib")[`RadioLib`] @radiolib library to handle the low level communication to the different LoRa modules.
-  ]
-
-  #loraMeshbModulesList
+  #pad()[]#pad()[]#pad()[]#pad()[]#pad()[]#pad()[]#pad()[]#pad()[]#pad()[]#pad()[]#pad()[]#pad()[]#pad()[]#pad()[]#pad()[]#pad()[]#pad()[]#pad()[]#pad()[]#pad()[]
 
   #comparisonTable
+  #pad()[]#pad()[]
 
   #otherParamsTable
 ]

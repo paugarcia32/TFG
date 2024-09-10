@@ -1,6 +1,7 @@
 #import "conf.typ": conf
 #import "content/intro.typ": intro
-#import "content/comparisonContent.typ": comparisonContent
+#import "content/comparisonContentLoRa.typ": comparisonContentLoRa
+#import "content/comparisonContentLoRaWAN.typ": comparisonContentLoRaWAN
 #import "acronyms.typ": acronymList
 
 #show: doc => conf(
@@ -19,4 +20,5 @@
 )
 
 #intro
-#comparisonContent
+#comparisonContentLoRa
+#comparisonContentLoRaWAN
