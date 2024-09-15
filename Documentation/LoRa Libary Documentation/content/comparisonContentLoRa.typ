@@ -1,5 +1,5 @@
 #import "comparisonTable.typ": comparisonTable
-#import "otherParamsTable.typ": otherParamsTable
+#import "otherLoRaParamsTable.typ": otherLoRaParamsTable
 
 
 
@@ -170,5 +170,5 @@ table(
   #comparisonTable
   #pad()[]#pad()[]
 
-  #otherParamsTable
+  #otherLoRaParamsTable
 ]

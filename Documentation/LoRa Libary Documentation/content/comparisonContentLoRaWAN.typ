@@ -1,9 +1,10 @@
 #import "comparisonTableLoRaWAN.typ": comparisonTableLoRaWAN
+#import "otherLoRaWANParamsTable.typ": otherLoRaWANParamsTable
 
 
 
 #let beelanModules = (
-  ("SX127x", "series LoRa modules (SX1272, SX1273, SX1276, SX1277, SX1278, SX1279)"),
+  ("SX127x", "series LoRa modules (SX1273, SX1277, SX1278 and SX1279)"),
 )
 
 #let beelanModulesList = [
@@ -28,13 +29,13 @@ table(
 ]
 
 #let arduino_lorawanModules = (
-  ("SX127x", "series LoRa modules (SX1272, SX1273, SX1276, SX1277, SX1278, SX1279)"),
+  ("SX127x", "series LoRa modules (SX1276-based)"),
 )
 
 #let arduino_lorawanModulesList = [
   #show heading: set heading()
   #show table.cell.where(y: 0): set text(weight: "bold")
-  === Beelan Modules
+  === Arduino LoraWAN Modules
   #pad()[]
   #figure(
 table(
@@ -65,7 +66,7 @@ table(
   == Beelan-LoRaWAN
   #pad()[]
   #par[
-    In first place, there is the `Beelan LoRaWAN` Library. This library is develop for be used in a generic platform, so is useful in our case.
+    In first place, there is the `Beelan LoRaWAN` @beelan_lorawan Library. This library is develop for be used in a generic platform, so is useful in our case.
   ]
 
   #beelanModulesList
@@ -73,7 +74,7 @@ table(
   == Arduino LoRaWAN
   #pad()[]
   #par[
-    In second place, there is the `MCCI Arduino LoRaWAN` Library. The `arduino-lorawan` library provides a structured way of using the #link("https://github.com/mcci-catena/arduino-lmic")[arduino-lmic] library to send sensor data over The Things Network or a similar LoRaWAN-based data network.
+    In second place, there is the `MCCI Arduino LoRaWAN` @arduino_lorawan Library. The `arduino-lorawan` library provides a structured way of using the #link("https://github.com/mcci-catena/arduino-lmic")[arduino-lmic] library to send sensor data over The Things Network or a similar LoRaWAN-based data network.
   ]
 
   #arduino_lorawanModulesList
@@ -81,4 +82,6 @@ table(
 
 
   #comparisonTableLoRaWAN
+
+  #otherLoRaWANParamsTable
 ]

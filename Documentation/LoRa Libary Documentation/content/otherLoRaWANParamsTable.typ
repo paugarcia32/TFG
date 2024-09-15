@@ -1,4 +1,4 @@
-#let otherParamsTable = [
+#let otherLoRaWANParamsTable = [
 
   #show table.cell.where(y: 0): set text(weight: "bold")
   #set table(align: (x, _) => if x == 0 { left } else { center })
@@ -15,28 +15,16 @@
     table(
       stroke: none,
       inset: 10pt,
-      columns: 5,
+      columns: 3,
       table.hline(y: 1),
       table.vline(x: 1),
 
-      table.header([],[Unnoficial Heltec],[Arduino LoRa],[RadioLib],[LoRa Mesher]),
-      [Library Updated], [☒], [☒], [☒],[☒],
-      [Good Documentation], [☒], [☒], [☒],[☒],
+      table.header([],[Beelan LoRaWAN],[Arduino LoRaWAN]),
+      [Library Updated], [☒], [☒],
+      [Good Documentation], [☒], [☒],
     ),
     caption: "Extra Parameters Table",
-  ) <otherParamsTable>
+  ) <otherLoRaWANParamsTable>
 
 
 ]
-
-
-
-
-
-
-
-
-
-
-
-

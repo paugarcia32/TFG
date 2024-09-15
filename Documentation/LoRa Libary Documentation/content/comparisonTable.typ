@@ -31,10 +31,6 @@
       [CRC], [], [☒], [☒],
       [Invert IQ signals], [], [☒], [],
       [LNA gain], [], [☒], [],
-      [CS], [], [], [],
-      [RQ], [], [], [],
-      [RST], [], [], [],
-      [I01], [], [], [],
     ),
     caption: "Library Table Comparison",
   ) <comparisonTable>
