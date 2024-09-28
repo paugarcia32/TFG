@@ -11,3 +11,5 @@ This project allows an ESP32 to receive Wi-Fi credentials (SSID and Password) ov
 - Serial Output: Provides detailed status messages over Serial for debugging.
 
 ## Example
+
+![{F8F79039-F047-408D-88A9-0C3ECEDB96F1}](https://github.com/user-attachments/assets/c3c5e8ed-2c7d-4285-b402-82c8d1a58acc)
