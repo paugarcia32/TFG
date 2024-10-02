@@ -2,9 +2,9 @@
 
 SX1262 radio = new Module(8, 14, 12, 13);
 volatile bool receivedFlag = false;
-volatile bool transmitting = false; // Nueva bandera
+volatile bool transmitting = false;
 int currentSF = 12;
-const uint16_t nodeID = random(1, 65535); // Generar un ID de nodo aleatorio
+const uint16_t nodeID = random(1, 65535);
 
 void setFlag(void) {
   if (!transmitting) {
@@ -65,14 +65,6 @@ void loop() {
         delay(randomDelay);
 
         enviarAck();
-      } else if (receivedData == "NEGOTIATE_SF") {
-        // Implementar lógica para negociar SF si es necesario
-      } else if (receivedData == "DATA") {
-        Serial.println(F("[SX1262] Datos recibidos con éxito!"));
-
-        currentSF = 12;
-        radio.setSpreadingFactor(currentSF);
-        Serial.println(F("[SX1262] Spreading Factor reiniciado a 12."));
       } else if (receivedData.startsWith("SCHEDULE:")) {
         int idStart = receivedData.indexOf(':') + 1;
         int idEnd = receivedData.indexOf(':', idStart);
@@ -80,16 +72,29 @@ void loop() {
         uint16_t receivedID = idStr.toInt();
 
         if (receivedID == nodeID) {
-          String timeStr = receivedData.substring(idEnd + 1);
-          unsigned long delayTime = timeStr.toInt();
+          int delayStart = idEnd + 1;
+          int delayEnd = receivedData.indexOf(':', delayStart);
+          String delayStr = receivedData.substring(delayStart, delayEnd);
+          unsigned long delayTime = delayStr.toInt();
+
+          String sfStr = receivedData.substring(delayEnd + 1);
+          uint8_t newSF = sfStr.toInt();
 
           Serial.print(F("[SX1262] Programando envío de datos en "));
           Serial.print(delayTime);
           Serial.println(F(" ms."));
+          Serial.print(F("[SX1262] Actualizando SF a: SF"));
+          Serial.println(newSF);
+
+          // Actualizar SF
+          currentSF = newSF;
+          radio.setSpreadingFactor(currentSF);
+
+          // Programar el envío de datos
           delay(delayTime);
           enviarDatos();
         }
-      }  else {
+      } else {
         Serial.println(F("[SX1262] Datos inesperados recibidos."));
       }
 
@@ -127,14 +132,13 @@ void enviarAck() {
   radio.startReceive();
 }
 
-
 void enviarDatos() {
   radio.standby();
   transmitting = true;
 
   Serial.println(F("[SX1262] Enviando datos..."));
 
-  // Aquí puedes preparar tus datos
+  // Preparar tus datos aquí
   String dataMessage = "DATA:" + String(nodeID) + ":<tus_datos>";
 
   int state = radio.transmit(dataMessage);
@@ -148,6 +152,11 @@ void enviarDatos() {
     Serial.println(state);
   }
 
+  // Restablecer el SF a 12 después de enviar los datos
+  currentSF = 12;
+  radio.setSpreadingFactor(currentSF);
+  Serial.println(F("[SX1262] Spreading Factor reiniciado a 12."));
+
+  // Volver al modo recepción
   radio.startReceive();
 }
-

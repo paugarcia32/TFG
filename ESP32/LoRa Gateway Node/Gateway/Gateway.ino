@@ -6,35 +6,11 @@ int transmissionState = RADIOLIB_ERR_NONE;
 int spreadingFactor = 12;
 bool ackReceived = false;
 volatile bool receivedFlag = false;
-unsigned long startTime;
-
-
-
 
 #define MAX_NODES 10
 uint16_t nodeIDs[MAX_NODES];
 uint8_t nodeCount = 0;
-
-void addNodeID(uint16_t nodeID) {
-  for (uint8_t i = 0; i < nodeCount; i++) {
-    if (nodeIDs[i] == nodeID) {
-      return; // El ID ya está en la lista
-    }
-  }
-  if (nodeCount < MAX_NODES) {
-    nodeIDs[nodeCount++] = nodeID;
-    Serial.print(F("[SX1262] Nodo añadido a la lista: "));
-    Serial.println(nodeID);
-  } else {
-    Serial.println(F("[SX1262] Lista de nodos llena."));
-  }
-}
-
-
-
-
-
-
+uint8_t nodeSFs[MAX_NODES];
 
 void setFlag(void) {
   receivedFlag = true;
@@ -78,7 +54,6 @@ void loop() {
   delay(30000);
 }
 
-
 void enviarBeacon() {
   Serial.print(F("[SX1262] Enviando beacon con SF"));
   Serial.print(spreadingFactor);
@@ -87,8 +62,6 @@ void enviarBeacon() {
   
   if (transmissionState == RADIOLIB_ERR_NONE) {
     Serial.println(F("[SX1262] Beacon enviado con éxito!"));
-    // Iniciar recepción para esperar el ACK
-    radio.startReceive();
   } else {
     Serial.print(F("Fallo, código "));
     Serial.println(transmissionState);
@@ -116,7 +89,6 @@ void esperarAck() {
   radio.standby();
 
   if (receivedFlag) {
-    // Se recibió un paquete
     receivedFlag = false;
 
     String receivedData;
@@ -132,7 +104,21 @@ void esperarAck() {
         Serial.print(F("[SX1262] ACK recibido de nodo ID: "));
         Serial.println(nodeID);
 
-        addNodeID(nodeID);
+        // Obtener RSSI y SNR
+        float rssi = radio.getRSSI();
+        float snr = radio.getSNR();
+        Serial.print(F("[SX1262] RSSI: "));
+        Serial.print(rssi);
+        Serial.print(F(" dBm, SNR: "));
+        Serial.print(snr);
+        Serial.println(F(" dB"));
+
+        // Calcular SF óptimo
+        uint8_t optimalSF = calculateOptimalSF(rssi, snr);
+        Serial.print(F("[SX1262] SF óptimo calculado: SF"));
+        Serial.println(optimalSF);
+
+        addNodeID(nodeID, optimalSF);
         ackReceived = true;
       } else {
         Serial.println(F("[SX1262] Datos inesperados recibidos en lugar de ACK."));
@@ -147,30 +133,18 @@ void esperarAck() {
   }
 }
 
-
-
-void enviarDatos() {
-  Serial.println(F("[SX1262] Enviando datos con nuevo SF..."));
-  transmissionState = radio.transmit("DATA");
-
-  if (transmissionState == RADIOLIB_ERR_NONE) {
-    Serial.println(F("[SX1262] Datos enviados con éxito!"));
-  } else {
-    Serial.print(F("Fallo, código "));
-    Serial.println(transmissionState);
-  }
-}
-
-
-
 void enviarSchedule() {
   for (uint8_t i = 0; i < nodeCount; i++) {
     uint16_t nodeID = nodeIDs[i];
-    unsigned long delayTime = (i + 1) * 2000; // Ejemplo: cada nodo envía datos 2 segundos después del anterior
-    String scheduleMessage = "SCHEDULE:" + String(nodeID) + ":" + String(delayTime);
+    uint8_t nodeSF = nodeSFs[i];
+    unsigned long delayTime = (i + 1) * 3000; // Aumenta el delayTime para asegurar que el gateway esté listo
+
+    String scheduleMessage = "SCHEDULE:" + String(nodeID) + ":" + String(delayTime) + ":" + String(nodeSF);
 
     Serial.print(F("[SX1262] Enviando programación a nodo "));
-    Serial.println(nodeID);
+    Serial.print(nodeID);
+    Serial.print(F(", SF: "));
+    Serial.println(nodeSF);
 
     int state = radio.transmit(scheduleMessage);
     if (state == RADIOLIB_ERR_NONE) {
@@ -179,7 +153,119 @@ void enviarSchedule() {
       Serial.print(F("Fallo al enviar programación, código "));
       Serial.println(state);
     }
-    delay(500); // Pequeño retraso entre transmisiones
+    // Puedes reducir o eliminar este retraso si tienes pocos nodos
+    // delay(500); // Pequeño retraso entre transmisiones
+  }
+
+  // Iniciar recepción después de enviar todas las programaciones
+  esperarDatos();
+}
+
+void esperarDatos() {
+  for (uint8_t i = 0; i < nodeCount; i++) {
+    uint16_t nodeID = nodeIDs[i];
+    uint8_t nodeSF = nodeSFs[i];
+
+    // Configurar el SF del gateway al SF del nodo
+    radio.setSpreadingFactor(nodeSF);
+    Serial.print(F("[SX1262] Configurando SF a "));
+    Serial.println(nodeSF);
+
+    // Limpiar bandera de recepción
+    receivedFlag = false;
+
+    // Iniciar recepción
+    radio.startReceive();
+
+    // Tiempo de espera en milisegundos (ajusta según sea necesario)
+    unsigned long timeout = 5000;
+    unsigned long startTime = millis();
+
+    // Esperar hasta que se reciba un paquete o se alcance el tiempo de espera
+    while (!receivedFlag && (millis() - startTime) < timeout) {
+      delay(10);
+    }
+
+    // Detener recepción y poner el radio en modo de espera
+    radio.standby();
+
+    if (receivedFlag) {
+      receivedFlag = false;
+
+      String receivedData;
+      int state = radio.readData(receivedData);
+
+      if (state == RADIOLIB_ERR_NONE) {
+        Serial.print(F("[SX1262] Datos recibidos: "));
+        Serial.println(receivedData);
+
+        // Procesar los datos recibidos
+        if (receivedData.startsWith("DATA:")) {
+          // Extraer el ID del nodo y los datos
+          int idStart = 5;
+          int idEnd = receivedData.indexOf(':', idStart);
+          String idStr = receivedData.substring(idStart, idEnd);
+          uint16_t receivedNodeID = idStr.toInt();
+
+          if (receivedNodeID == nodeID) {
+            String dataStr = receivedData.substring(idEnd + 1);
+
+            Serial.print(F("[SX1262] Datos recibidos de nodo ID "));
+            Serial.print(nodeID);
+            Serial.print(F(": "));
+            Serial.println(dataStr);
+          } else {
+            Serial.println(F("[SX1262] Datos recibidos de nodo inesperado."));
+          }
+        } else {
+          Serial.println(F("[SX1262] Datos inesperados recibidos."));
+        }
+      } else {
+        Serial.print(F("[SX1262] Error al leer datos, código "));
+        Serial.println(state);
+      }
+    } else {
+      Serial.print(F("[SX1262] No se recibieron datos del nodo ID "));
+      Serial.println(nodeID);
+    }
+  }
+
+  // Restablecer el SF del gateway a SF12 después de recibir datos
+  radio.setSpreadingFactor(spreadingFactor);
+  Serial.println(F("[SX1262] Spreading Factor del gateway reiniciado a 12."));
+}
+
+
+void addNodeID(uint16_t nodeID, uint8_t sf) {
+  for (uint8_t i = 0; i < nodeCount; i++) {
+    if (nodeIDs[i] == nodeID) {
+      nodeSFs[i] = sf; // Actualizar SF si el ID ya existe
+      return;
+    }
+  }
+  if (nodeCount < MAX_NODES) {
+    nodeIDs[nodeCount] = nodeID;
+    nodeSFs[nodeCount] = sf;
+    nodeCount++;
+    Serial.print(F("[SX1262] Nodo añadido a la lista: "));
+    Serial.println(nodeID);
+  } else {
+    Serial.println(F("[SX1262] Lista de nodos llena."));
   }
 }
 
+uint8_t calculateOptimalSF(float rssi, float snr) {
+  if (rssi > -80 && snr > 10) {
+    return 7;
+  } else if (rssi > -90 && snr > 5) {
+    return 8;
+  } else if (rssi > -100 && snr > 0) {
+    return 9;
+  } else if (rssi > -110 && snr > -5) {
+    return 10;
+  } else if (rssi > -120 && snr > -10) {
+    return 11;
+  } else {
+    return 12;
+  }
+}
