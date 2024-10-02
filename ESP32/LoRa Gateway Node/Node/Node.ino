@@ -4,6 +4,7 @@ SX1262 radio = new Module(8, 14, 12, 13);
 volatile bool receivedFlag = false;
 volatile bool transmitting = false; // Nueva bandera
 int currentSF = 12;
+const uint16_t nodeID = random(1, 65535); // Generar un ID de nodo aleatorio
 
 void setFlag(void) {
   if (!transmitting) {
@@ -57,6 +58,12 @@ void loop() {
       Serial.println(receivedData);
 
       if (receivedData == "BEACON") {
+        int randomDelay = random(0, 2000);
+        Serial.print(F("[SX1262] Esperando "));
+        Serial.print(randomDelay);
+        Serial.println(F(" ms antes de enviar ACK."));
+        delay(randomDelay);
+
         enviarAck();
       } else if (receivedData == "NEGOTIATE_SF") {
         // Implementar lógica para negociar SF si es necesario
@@ -66,7 +73,23 @@ void loop() {
         currentSF = 12;
         radio.setSpreadingFactor(currentSF);
         Serial.println(F("[SX1262] Spreading Factor reiniciado a 12."));
-      } else {
+      } else if (receivedData.startsWith("SCHEDULE:")) {
+        int idStart = receivedData.indexOf(':') + 1;
+        int idEnd = receivedData.indexOf(':', idStart);
+        String idStr = receivedData.substring(idStart, idEnd);
+        uint16_t receivedID = idStr.toInt();
+
+        if (receivedID == nodeID) {
+          String timeStr = receivedData.substring(idEnd + 1);
+          unsigned long delayTime = timeStr.toInt();
+
+          Serial.print(F("[SX1262] Programando envío de datos en "));
+          Serial.print(delayTime);
+          Serial.println(F(" ms."));
+          delay(delayTime);
+          enviarDatos();
+        }
+      }  else {
         Serial.println(F("[SX1262] Datos inesperados recibidos."));
       }
 
@@ -84,15 +107,15 @@ void loop() {
 }
 
 void enviarAck() {
-  // Detener recepción antes de transmitir
   radio.standby();
-
-  transmitting = true; // Indicar que estamos transmitiendo
+  transmitting = true;
 
   Serial.println(F("[SX1262] Enviando ACK..."));
-  int state = radio.transmit("ACK");
 
-  transmitting = false; // Transmisión completada
+  String ackMessage = "ACK:" + String(nodeID);
+  int state = radio.transmit(ackMessage);
+
+  transmitting = false;
 
   if (state == RADIOLIB_ERR_NONE) {
     Serial.println(F("[SX1262] ACK enviado con éxito!"));
@@ -100,6 +123,31 @@ void enviarAck() {
     Serial.print(F("Fallo al enviar ACK, código "));
     Serial.println(state);
   }
-  // Después de transmitir, volver al modo recepción
+
   radio.startReceive();
 }
+
+
+void enviarDatos() {
+  radio.standby();
+  transmitting = true;
+
+  Serial.println(F("[SX1262] Enviando datos..."));
+
+  // Aquí puedes preparar tus datos
+  String dataMessage = "DATA:" + String(nodeID) + ":<tus_datos>";
+
+  int state = radio.transmit(dataMessage);
+
+  transmitting = false;
+
+  if (state == RADIOLIB_ERR_NONE) {
+    Serial.println(F("[SX1262] Datos enviados con éxito!"));
+  } else {
+    Serial.print(F("Fallo al enviar datos, código "));
+    Serial.println(state);
+  }
+
+  radio.startReceive();
+}
+

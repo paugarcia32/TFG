@@ -8,6 +8,34 @@ bool ackReceived = false;
 volatile bool receivedFlag = false;
 unsigned long startTime;
 
+
+
+
+#define MAX_NODES 10
+uint16_t nodeIDs[MAX_NODES];
+uint8_t nodeCount = 0;
+
+void addNodeID(uint16_t nodeID) {
+  for (uint8_t i = 0; i < nodeCount; i++) {
+    if (nodeIDs[i] == nodeID) {
+      return; // El ID ya está en la lista
+    }
+  }
+  if (nodeCount < MAX_NODES) {
+    nodeIDs[nodeCount++] = nodeID;
+    Serial.print(F("[SX1262] Nodo añadido a la lista: "));
+    Serial.println(nodeID);
+  } else {
+    Serial.println(F("[SX1262] Lista de nodos llena."));
+  }
+}
+
+
+
+
+
+
+
 void setFlag(void) {
   receivedFlag = true;
 }
@@ -38,16 +66,18 @@ void setup() {
 
 void loop() {
   enviarBeacon();
-  esperarAck(); 
+  esperarAck();
 
   if (ackReceived) {
-    delay(500); // Esperar 500 ms
-    // negociarSF(); // Si tienes esta función
+    delay(500);
+    enviarSchedule();
     ackReceived = false;
+    nodeCount = 0; // Reiniciar la lista de nodos para la siguiente ronda
   }
 
-  delay(60000); // Enviar beacon cada 5 segundos
+  delay(30000);
 }
+
 
 void enviarBeacon() {
   Serial.print(F("[SX1262] Enviando beacon con SF"));
@@ -73,7 +103,7 @@ void esperarAck() {
   radio.startReceive();
 
   // Tiempo de espera en milisegundos
-  unsigned long timeout = 10000;
+  unsigned long timeout = 10000; // Declaración de 'timeout'
   unsigned long startTime = millis();
 
   // Esperar hasta que se reciba un paquete o se alcance el tiempo de espera
@@ -96,8 +126,13 @@ void esperarAck() {
       Serial.print(F("[SX1262] Datos recibidos: "));
       Serial.println(receivedData);
 
-      if (receivedData == "ACK") {
-        Serial.println(F("[SX1262] ACK recibido!"));
+      if (receivedData.startsWith("ACK:")) {
+        String idStr = receivedData.substring(4);
+        uint16_t nodeID = idStr.toInt();
+        Serial.print(F("[SX1262] ACK recibido de nodo ID: "));
+        Serial.println(nodeID);
+
+        addNodeID(nodeID);
         ackReceived = true;
       } else {
         Serial.println(F("[SX1262] Datos inesperados recibidos en lugar de ACK."));
@@ -108,9 +143,11 @@ void esperarAck() {
     }
   } else {
     // No se recibió ningún paquete dentro del tiempo de espera
-    Serial.println(F("[SX1262] ACK no recibido (tiempo de espera agotado). Reintentando..."));
+    Serial.println(F("[SX1262] ACK no recibido (tiempo de espera agotado)."));
   }
 }
+
+
 
 void enviarDatos() {
   Serial.println(F("[SX1262] Enviando datos con nuevo SF..."));
@@ -123,3 +160,26 @@ void enviarDatos() {
     Serial.println(transmissionState);
   }
 }
+
+
+
+void enviarSchedule() {
+  for (uint8_t i = 0; i < nodeCount; i++) {
+    uint16_t nodeID = nodeIDs[i];
+    unsigned long delayTime = (i + 1) * 2000; // Ejemplo: cada nodo envía datos 2 segundos después del anterior
+    String scheduleMessage = "SCHEDULE:" + String(nodeID) + ":" + String(delayTime);
+
+    Serial.print(F("[SX1262] Enviando programación a nodo "));
+    Serial.println(nodeID);
+
+    int state = radio.transmit(scheduleMessage);
+    if (state == RADIOLIB_ERR_NONE) {
+      Serial.println(F("[SX1262] Programación enviada con éxito!"));
+    } else {
+      Serial.print(F("Fallo al enviar programación, código "));
+      Serial.println(state);
+    }
+    delay(500); // Pequeño retraso entre transmisiones
+  }
+}
+
