@@ -6,6 +6,9 @@ volatile bool transmitting = false;
 int currentSF = 12;
 const uint16_t nodeID = random(1, 65535);
 
+// Número máximo de reintentos
+const int maxRetries = 5;
+
 void setFlag(void) {
   if (!transmitting) {
     receivedFlag = true;
