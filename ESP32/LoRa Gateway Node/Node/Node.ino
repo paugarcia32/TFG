@@ -1,12 +1,11 @@
 #include <RadioLib.h>
 
 SX1262 radio = new Module(8, 14, 12, 13);
+
 volatile bool receivedFlag = false;
 volatile bool transmitting = false;
-int currentSF = 12;
-const uint16_t nodeID = random(1, 65535);
-
-const int maxRetries = 5;
+uint8_t currentSF = 12;
+uint16_t nodeID;
 
 void setFlag(void) {
   if (!transmitting) {
@@ -17,6 +16,9 @@ void setFlag(void) {
 void setup() {
   Serial.begin(115200);
 
+  randomSeed(analogRead(0));
+  nodeID = random(1, 65535);
+
   Serial.print(F("[SX1262] Inicializando ... "));
   int state = radio.begin(868.0);
   if (state == RADIOLIB_ERR_NONE) {
@@ -26,7 +28,6 @@ void setup() {
     Serial.println(state);
     while (true) { delay(10); }
   }
-
 
   radio.setSpreadingFactor(currentSF);
   radio.setBandwidth(125.0);
@@ -52,14 +53,14 @@ void loop() {
   if (receivedFlag) {
     receivedFlag = false;
 
-    String receivedData;
-    int state = radio.readData(receivedData);
+    uint8_t receivedData[64];
+    int state = radio.readData(receivedData, sizeof(receivedData));
 
     if (state == RADIOLIB_ERR_NONE) {
       Serial.print(F("[SX1262] Paquete recibido: "));
-      Serial.println(receivedData);
+      Serial.println((char*)receivedData);
 
-      if (receivedData == "B") {
+      if (strcmp((char*)receivedData, "B") == 0) {
         int randomDelay = random(0, 2000);
         Serial.print(F("[SX1262] Esperando "));
         Serial.print(randomDelay);
@@ -67,44 +68,18 @@ void loop() {
         delay(randomDelay);
 
         enviarAck();
-      } else if (receivedData.startsWith("S:")) {
-        int idStart = receivedData.indexOf(':') + 1;
-        int idEnd = receivedData.indexOf(':', idStart);
-        String idStr = receivedData.substring(idStart, idEnd);
-        uint16_t receivedID = idStr.toInt();
-
-        if (receivedID == nodeID) {
-          int delayStart = idEnd + 1;
-          int delayEnd = receivedData.indexOf(':', delayStart);
-          String delayStr = receivedData.substring(delayStart, delayEnd);
-          unsigned long delayTime = delayStr.toInt();
-
-          String sfStr = receivedData.substring(delayEnd + 1);
-          uint8_t newSF = sfStr.toInt();
-
-          Serial.print(F("[SX1262] Programando envío de datos en "));
-          Serial.print(delayTime);
-          Serial.println(F(" ms."));
-          Serial.print(F("[SX1262] Actualizando SF a: SF"));
-          Serial.println(newSF);
-
-          currentSF = newSF;
-          radio.setSpreadingFactor(currentSF);
-
-          delay(delayTime);
-          enviarDatos();
-        }
+      } else if (strncmp((char*)receivedData, "S:", 2) == 0) {
+        procesarSchedule((char*)receivedData);
       } else {
         Serial.println(F("[SX1262] Datos inesperados recibidos."));
       }
-
 
       radio.startReceive();
     } else if (state == RADIOLIB_ERR_CRC_MISMATCH) {
       Serial.println(F("[SX1262] Error de CRC!"));
       radio.startReceive();
     } else {
-      Serial.print(F("Fallo, código "));
+      Serial.print(F("Fallo al recibir datos, código "));
       Serial.println(state);
       radio.startReceive();
     }
@@ -117,8 +92,10 @@ void enviarAck() {
 
   Serial.println(F("[SX1262] Enviando ACK..."));
 
-  String ackMessage = "A:" + String(nodeID);
-  int state = radio.transmit(ackMessage);
+  char ackMessage[20];
+  sprintf(ackMessage, "A:%u", nodeID);
+
+  int state = radio.transmit((uint8_t*)ackMessage, strlen(ackMessage));
 
   transmitting = false;
 
@@ -138,10 +115,10 @@ void enviarDatos() {
 
   Serial.println(F("[SX1262] Enviando datos..."));
 
+  char dataMessage[30];
+  sprintf(dataMessage, "D:%u:33ºC", nodeID);
 
-  String dataMessage = "D:" + String(nodeID) + ":33ºC";
-
-  int state = radio.transmit(dataMessage);
+  int state = radio.transmit((uint8_t*)dataMessage, strlen(dataMessage));
 
   transmitting = false;
 
@@ -158,4 +135,57 @@ void enviarDatos() {
   Serial.println(F("[SX1262] Spreading Factor reiniciado a 12."));
 
   radio.startReceive();
+}
+
+void procesarSchedule(char* receivedData) {
+  char* token;
+  uint16_t receivedID;
+  unsigned long delayTime;
+  uint8_t newSF;
+
+  token = strtok(receivedData + 2, ":");
+  if (token != NULL) {
+    receivedID = atoi(token);
+  } else {
+    Serial.println(F("[SX1262] Formato de mensaje S incorrecto."));
+    return;
+  }
+
+
+  if (receivedID == nodeID) {
+    token = strtok(NULL, ":");
+    if (token != NULL) {
+      delayTime = atol(token);
+    } else {
+      Serial.println(F("[SX1262] Formato de mensaje S incorrecto."));
+      return;
+    }
+
+    token = strtok(NULL, ":");
+    if (token != NULL) {
+      newSF = atoi(token);
+    } else {
+      Serial.println(F("[SX1262] Formato de mensaje S incorrecto."));
+      return;
+    }
+
+    Serial.print(F("[SX1262] Programando envío de datos en "));
+    Serial.print(delayTime);
+    Serial.println(F(" ms."));
+    Serial.print(F("[SX1262] Actualizando SF a: SF"));
+    Serial.println(newSF);
+
+    currentSF = newSF;
+    radio.setSpreadingFactor(currentSF);
+
+    unsigned long startTime = millis();
+    while (millis() - startTime < delayTime) {
+
+      delay(10);
+    }
+
+    enviarDatos();
+  } else {
+    Serial.println(F("[SX1262] Mensaje S no dirigido a este nodo."));
+  }
 }
