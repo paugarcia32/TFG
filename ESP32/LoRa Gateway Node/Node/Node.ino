@@ -6,7 +6,6 @@ volatile bool transmitting = false;
 int currentSF = 12;
 const uint16_t nodeID = random(1, 65535);
 
-// Número máximo de reintentos
 const int maxRetries = 5;
 
 void setFlag(void) {
@@ -28,7 +27,7 @@ void setup() {
     while (true) { delay(10); }
   }
 
-  // Configurar parámetros del radio
+
   radio.setSpreadingFactor(currentSF);
   radio.setBandwidth(125.0);
   radio.setCodingRate(5);
@@ -60,7 +59,7 @@ void loop() {
       Serial.print(F("[SX1262] Paquete recibido: "));
       Serial.println(receivedData);
 
-      if (receivedData == "BEACON") {
+      if (receivedData == "B") {
         int randomDelay = random(0, 2000);
         Serial.print(F("[SX1262] Esperando "));
         Serial.print(randomDelay);
@@ -68,7 +67,7 @@ void loop() {
         delay(randomDelay);
 
         enviarAck();
-      } else if (receivedData.startsWith("SCHEDULE:")) {
+      } else if (receivedData.startsWith("S:")) {
         int idStart = receivedData.indexOf(':') + 1;
         int idEnd = receivedData.indexOf(':', idStart);
         String idStr = receivedData.substring(idStart, idEnd);
@@ -89,11 +88,9 @@ void loop() {
           Serial.print(F("[SX1262] Actualizando SF a: SF"));
           Serial.println(newSF);
 
-          // Actualizar SF
           currentSF = newSF;
           radio.setSpreadingFactor(currentSF);
 
-          // Programar el envío de datos
           delay(delayTime);
           enviarDatos();
         }
@@ -101,7 +98,7 @@ void loop() {
         Serial.println(F("[SX1262] Datos inesperados recibidos."));
       }
 
-      // Volver al modo recepción
+
       radio.startReceive();
     } else if (state == RADIOLIB_ERR_CRC_MISMATCH) {
       Serial.println(F("[SX1262] Error de CRC!"));
@@ -120,7 +117,7 @@ void enviarAck() {
 
   Serial.println(F("[SX1262] Enviando ACK..."));
 
-  String ackMessage = "ACK:" + String(nodeID);
+  String ackMessage = "A:" + String(nodeID);
   int state = radio.transmit(ackMessage);
 
   transmitting = false;
@@ -141,8 +138,8 @@ void enviarDatos() {
 
   Serial.println(F("[SX1262] Enviando datos..."));
 
-  // Preparar tus datos aquí
-  String dataMessage = "DATA:" + String(nodeID) + ":<tus_datos>";
+
+  String dataMessage = "D:" + String(nodeID) + ":33ºC";
 
   int state = radio.transmit(dataMessage);
 
@@ -155,11 +152,10 @@ void enviarDatos() {
     Serial.println(state);
   }
 
-  // Restablecer el SF a 12 después de enviar los datos
+
   currentSF = 12;
   radio.setSpreadingFactor(currentSF);
   Serial.println(F("[SX1262] Spreading Factor reiniciado a 12."));
 
-  // Volver al modo recepción
   radio.startReceive();
 }

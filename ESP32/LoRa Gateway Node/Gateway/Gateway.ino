@@ -29,7 +29,6 @@ void setup() {
     while (true) { delay(10); }
   }
 
-  // Configurar parámetros del radio
   radio.setSpreadingFactor(spreadingFactor);
   radio.setBandwidth(125.0);
   radio.setCodingRate(5);
@@ -48,7 +47,7 @@ void loop() {
     delay(500);
     enviarSchedule();
     ackReceived = false;
-    nodeCount = 0; // Reiniciar la lista de nodos para la siguiente ronda
+    nodeCount = 0; 
   }
 
   delay(30000);
@@ -58,7 +57,7 @@ void enviarBeacon() {
   Serial.print(F("[SX1262] Enviando beacon con SF"));
   Serial.print(spreadingFactor);
   Serial.println(F(" ..."));
-  transmissionState = radio.transmit("BEACON");
+  transmissionState = radio.transmit("B");
   
   if (transmissionState == RADIOLIB_ERR_NONE) {
     Serial.println(F("[SX1262] Beacon enviado con éxito!"));
@@ -69,23 +68,17 @@ void enviarBeacon() {
 }
 
 void esperarAck() {
-  // Limpiar bandera de recepción
   receivedFlag = false;
 
-  // Iniciar recepción
   radio.startReceive();
 
-  // Tiempo de espera en milisegundos
-  unsigned long timeout = 10000; // Declaración de 'timeout'
+  unsigned long timeout = 10000; 
   unsigned long startTime = millis();
 
-  // Esperar hasta que se reciba un paquete o se alcance el tiempo de espera
   while (!receivedFlag && (millis() - startTime) < timeout) {
-    // Esperar brevemente para evitar bloquear completamente el microcontrolador
     delay(10);
   }
 
-  // Detener recepción y poner el radio en modo de espera
   radio.standby();
 
   if (receivedFlag) {
@@ -98,13 +91,12 @@ void esperarAck() {
       Serial.print(F("[SX1262] Datos recibidos: "));
       Serial.println(receivedData);
 
-      if (receivedData.startsWith("ACK:")) {
-        String idStr = receivedData.substring(4);
+      if (receivedData.startsWith("A:")) {
+        String idStr = receivedData.substring(2);
         uint16_t nodeID = idStr.toInt();
         Serial.print(F("[SX1262] ACK recibido de nodo ID: "));
         Serial.println(nodeID);
 
-        // Obtener RSSI y SNR
         float rssi = radio.getRSSI();
         float snr = radio.getSNR();
         Serial.print(F("[SX1262] RSSI: "));
@@ -113,7 +105,6 @@ void esperarAck() {
         Serial.print(snr);
         Serial.println(F(" dB"));
 
-        // Calcular SF óptimo
         uint8_t optimalSF = calculateOptimalSF(rssi, snr);
         Serial.print(F("[SX1262] SF óptimo calculado: SF"));
         Serial.println(optimalSF);
@@ -128,7 +119,6 @@ void esperarAck() {
       Serial.println(state);
     }
   } else {
-    // No se recibió ningún paquete dentro del tiempo de espera
     Serial.println(F("[SX1262] ACK no recibido (tiempo de espera agotado)."));
   }
 }
@@ -137,9 +127,9 @@ void enviarSchedule() {
   for (uint8_t i = 0; i < nodeCount; i++) {
     uint16_t nodeID = nodeIDs[i];
     uint8_t nodeSF = nodeSFs[i];
-    unsigned long delayTime = (i + 1) * 3000; // Aumenta el delayTime para asegurar que el gateway esté listo
+    unsigned long delayTime = (i + 1) * 3000; 
 
-    String scheduleMessage = "SCHEDULE:" + String(nodeID) + ":" + String(delayTime) + ":" + String(nodeSF);
+    String scheduleMessage = "S:" + String(nodeID) + ":" + String(delayTime) + ":" + String(nodeSF);
 
     Serial.print(F("[SX1262] Enviando programación a nodo "));
     Serial.print(nodeID);
@@ -153,11 +143,10 @@ void enviarSchedule() {
       Serial.print(F("Fallo al enviar programación, código "));
       Serial.println(state);
     }
-    // Puedes reducir o eliminar este retraso si tienes pocos nodos
-    // delay(500); // Pequeño retraso entre transmisiones
+    // delay(500); 
   }
 
-  // Iniciar recepción después de enviar todas las programaciones
+
   esperarDatos();
 }
 
@@ -166,27 +155,22 @@ void esperarDatos() {
     uint16_t nodeID = nodeIDs[i];
     uint8_t nodeSF = nodeSFs[i];
 
-    // Configurar el SF del gateway al SF del nodo
+
     radio.setSpreadingFactor(nodeSF);
     Serial.print(F("[SX1262] Configurando SF a "));
     Serial.println(nodeSF);
-
-    // Limpiar bandera de recepción
+    
     receivedFlag = false;
 
-    // Iniciar recepción
+    
     radio.startReceive();
-
-    // Tiempo de espera en milisegundos (ajusta según sea necesario)
     unsigned long timeout = 5000;
     unsigned long startTime = millis();
 
-    // Esperar hasta que se reciba un paquete o se alcance el tiempo de espera
     while (!receivedFlag && (millis() - startTime) < timeout) {
       delay(10);
     }
 
-    // Detener recepción y poner el radio en modo de espera
     radio.standby();
 
     if (receivedFlag) {
@@ -199,10 +183,8 @@ void esperarDatos() {
         Serial.print(F("[SX1262] Datos recibidos: "));
         Serial.println(receivedData);
 
-        // Procesar los datos recibidos
-        if (receivedData.startsWith("DATA:")) {
-          // Extraer el ID del nodo y los datos
-          int idStart = 5;
+        if (receivedData.startsWith("D:")) {
+          int idStart = 2;
           int idEnd = receivedData.indexOf(':', idStart);
           String idStr = receivedData.substring(idStart, idEnd);
           uint16_t receivedNodeID = idStr.toInt();
@@ -230,7 +212,7 @@ void esperarDatos() {
     }
   }
 
-  // Restablecer el SF del gateway a SF12 después de recibir datos
+
   radio.setSpreadingFactor(spreadingFactor);
   Serial.println(F("[SX1262] Spreading Factor del gateway reiniciado a 12."));
 }
@@ -239,7 +221,7 @@ void esperarDatos() {
 void addNodeID(uint16_t nodeID, uint8_t sf) {
   for (uint8_t i = 0; i < nodeCount; i++) {
     if (nodeIDs[i] == nodeID) {
-      nodeSFs[i] = sf; // Actualizar SF si el ID ya existe
+      nodeSFs[i] = sf; 
       return;
     }
   }
@@ -255,17 +237,15 @@ void addNodeID(uint16_t nodeID, uint8_t sf) {
 }
 
 uint8_t calculateOptimalSF(float rssi, float snr) {
-  if (rssi > -80 && snr > 10) {
-    return 7;
-  } else if (rssi > -90 && snr > 5) {
-    return 8;
-  } else if (rssi > -100 && snr > 0) {
-    return 9;
-  } else if (rssi > -110 && snr > -5) {
-    return 10;
-  } else if (rssi > -120 && snr > -10) {
-    return 11;
-  } else {
-    return 12;
+
+  int sensitivitySF[] = {-125, -127, -130, -132, -135, -137};
+  float snrLimit[] = {-7.5, -10, -12.5, -15, -17.5, -20};
+
+  for (int i = 0; i < 6; i++) {
+    if (rssi >= sensitivitySF[i] && snr >= snrLimit[i]) {
+      return 7 + i;  
+    }
   }
+  return 12;
 }
+
