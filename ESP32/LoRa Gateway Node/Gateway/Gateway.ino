@@ -58,7 +58,7 @@ void loop() {
     }
   }
 
-  // Otras tareas pueden ir aquí
+  
 }
 
 void enviarBeacon() {
