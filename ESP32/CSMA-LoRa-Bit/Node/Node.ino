@@ -329,6 +329,67 @@ unsigned long calculateInterval(uint8_t spreadingFactor) {
   }
 }
 
+// void sendTemperature(int16_t temperature) {
+//   Message msg;
+//   msg.type = DATA;
+//   msg.nodeId = nodeIdConst;
+//   msg.dataType = DATA_TEMPERATURE;
+//   msg.sign = (temperature < 0);
+//   msg.dataValue = abs(temperature);
+
+//   uint8_t buffer[256];
+//   uint8_t bufferLength;
+//   packMessage(msg, buffer, bufferLength);
+
+//   Serial.println(F("[Nodo][4] Enviando temperatura..."));
+//   operationState = radio.transmit(buffer, bufferLength);
+//   if (operationState == RADIOLIB_ERR_NONE) {
+//     Serial.println(F("[Nodo][4] Temperatura enviada con éxito."));
+//   } else {
+//     Serial.print(F("[Nodo][4] Falló al enviar temperatura, código "));
+//     Serial.println(operationState);
+//   }
+
+//   delay(2000);
+
+//   operationState = radio.startReceive();
+//   currentOperation = RADIO_RX;
+//   if (operationState != RADIOLIB_ERR_NONE) {
+//     Serial.print(F("Falló al iniciar recepción, código "));
+//     Serial.println(operationState);
+//   }
+// }
+
+// void sendPressure(uint16_t pressure) {
+//   Message msg;
+//   msg.type = DATA;
+//   msg.nodeId = nodeIdConst;
+//   msg.dataType = DATA_PRESSURE;
+//   msg.dataValue = pressure;
+
+//   uint8_t buffer[256];
+//   uint8_t bufferLength;
+//   packMessage(msg, buffer, bufferLength);
+
+//   Serial.println(F("[Nodo][4] Enviando presión..."));
+//   operationState = radio.transmit(buffer, bufferLength);
+//   if (operationState == RADIOLIB_ERR_NONE) {
+//     Serial.println(F("[Nodo][4] Presión enviada con éxito."));
+//   } else {
+//     Serial.print(F("[Nodo][4] Falló al enviar presión, código "));
+//     Serial.println(operationState);
+//   }
+
+//   delay(2000);
+
+//   operationState = radio.startReceive();
+//   currentOperation = RADIO_RX;
+//   if (operationState != RADIOLIB_ERR_NONE) {
+//     Serial.print(F("[Nodo][4] Falló al iniciar recepción, código "));
+//     Serial.println(operationState);
+//   }
+// }
+
 void sendTemperature(int16_t temperature) {
   Message msg;
   msg.type = DATA;
@@ -341,7 +402,24 @@ void sendTemperature(int16_t temperature) {
   uint8_t bufferLength;
   packMessage(msg, buffer, bufferLength);
 
-  Serial.println(F("[Nodo][4] Enviando temperatura..."));
+  // Escanear canal antes de enviar
+  while (true) {
+    int scanResult = radio.scanChannel();
+    if (scanResult == RADIOLIB_LORA_DETECTED) {
+      Serial.println(F("[Nodo][Data] Canal ocupado, esperando 2s..."));
+      delay(2000); 
+    } else if (scanResult == RADIOLIB_CHANNEL_FREE) {
+      Serial.println(F("[Nodo][Data] Canal libre, enviando temperatura..."));
+      break;
+    } else {
+      Serial.print(F("[Nodo][Data] Falló al escanear canal, código "));
+      Serial.println(scanResult);
+      // Podrías implementar una lógica de reintentos o simplemente volver a intentar tras un delay
+      delay(2000);
+    }
+  }
+
+  // Ahora el canal está libre, proceder con la transmisión
   operationState = radio.transmit(buffer, bufferLength);
   if (operationState == RADIOLIB_ERR_NONE) {
     Serial.println(F("[Nodo][4] Temperatura enviada con éxito."));
@@ -371,7 +449,23 @@ void sendPressure(uint16_t pressure) {
   uint8_t bufferLength;
   packMessage(msg, buffer, bufferLength);
 
-  Serial.println(F("[Nodo][4] Enviando presión..."));
+  // Escanear canal antes de enviar
+  while (true) {
+    int scanResult = radio.scanChannel();
+    if (scanResult == RADIOLIB_LORA_DETECTED) {
+      Serial.println(F("[Nodo][Data] Canal ocupado, esperando 2s..."));
+      delay(2000);
+    } else if (scanResult == RADIOLIB_CHANNEL_FREE) {
+      Serial.println(F("[Nodo][Data] Canal libre, enviando presión..."));
+      break;
+    } else {
+      Serial.print(F("[Nodo][Data] Falló al escanear canal, código "));
+      Serial.println(scanResult);
+      delay(2000);
+    }
+  }
+
+  // Ahora el canal está libre, proceder con la transmisión
   operationState = radio.transmit(buffer, bufferLength);
   if (operationState == RADIOLIB_ERR_NONE) {
     Serial.println(F("[Nodo][4] Presión enviada con éxito."));
