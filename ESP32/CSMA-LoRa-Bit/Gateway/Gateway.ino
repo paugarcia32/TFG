@@ -57,7 +57,7 @@ unsigned long cycleStartTime;
 bool scheduleSent = false;
 
 
-const unsigned long slotTime = 5000; 
+const unsigned long slotTime = 85000; 
 
 SX1262 radio = new Module(8, 14, 12, 13);
 
@@ -354,14 +354,14 @@ void sendSchedules() {
     Serial.print(F("[Gateway][3] Enviando SCHEDULE a Nodo ID: "));
     Serial.println((uint8_t)msg.nodeId, BIN);
 
-    int state = radio.setSpreadingFactor(nodes[i].optimalSF);
-    if (state == RADIOLIB_ERR_NONE) {
-      Serial.print(F("[Gateway] SF ajustado a SF"));
-      Serial.println(nodes[i].optimalSF);
-    } else {
-      Serial.print(F("Falló al ajustar el SF, código "));
-      Serial.println(state);
-    }
+    // int state = radio.setSpreadingFactor(nodes[i].optimalSF);
+    // if (state == RADIOLIB_ERR_NONE) {
+    //   Serial.print(F("[Gateway] SF ajustado a SF"));
+    //   Serial.println(nodes[i].optimalSF);
+    // } else {
+    //   Serial.print(F("Falló al ajustar el SF, código "));
+    //   Serial.println(state);
+    // }
 
     operationState = radio.transmit(buffer, bufferLength);
     currentOperation = RADIO_TX;
@@ -394,13 +394,16 @@ void receiveDataFromNodes() {
       Serial.println(state);
     }
 
-    unsigned long waitTime = slotTime * (uint8_t)node.nodeId;
-    Serial.print(F("[Gateway] Esperando "));
-    Serial.print(waitTime / 1000);
-    Serial.println(F(" segundos para recibir datos del nodo."));
-    delay(waitTime);
+    unsigned long slotStartTime = millis();
+    unsigned long slotEndTime = slotStartTime + slotTime;
 
+    Serial.print(F("[Gateway] Escuchando datos del nodo "));
+    Serial.print((uint8_t)node.nodeId);
+    Serial.print(F(" durante "));
+    Serial.print(slotTime / 1000);
+    Serial.println(F(" segundos."));
 
+    // Mantener la recepción activa durante toda la ranura
     operationState = radio.startReceive();
     currentOperation = RADIO_RX;
     if (operationState != RADIOLIB_ERR_NONE) {
@@ -408,15 +411,11 @@ void receiveDataFromNodes() {
       Serial.println(operationState);
     }
 
-    unsigned long receiveTimeout = 5000; 
-    unsigned long receiveStartTime = millis();
-    bool dataReceived = false;
-
-    while (millis() - receiveStartTime < receiveTimeout) {
+    while (millis() < slotEndTime) {
       if (operationDone) {
         operationDone = false;
+
         if (operationState == RADIOLIB_ERR_NONE && currentOperation == RADIO_RX) {
-  
           uint8_t buffer[256];
           int length = radio.getPacketLength();
           int state = radio.readData(buffer, length);
@@ -425,9 +424,7 @@ void receiveDataFromNodes() {
             Message msg;
             unpackMessage(buffer, length, msg);
 
-          
             if (msg.type == DATA && msg.nodeId == node.nodeId) {
-              
               Serial.println(F("[Gateway] Datos recibidos del nodo."));
 
               if (msg.dataType == DATA_TEMPERATURE) {
@@ -452,17 +449,20 @@ void receiveDataFromNodes() {
             Serial.println(state);
           }
 
-          dataReceived = true;
-          break;
+          // Reiniciar recepción para el siguiente mensaje
+          operationState = radio.startReceive();
+          currentOperation = RADIO_RX;
+          if (operationState != RADIOLIB_ERR_NONE) {
+            Serial.print(F("Falló al iniciar recepción, código "));
+            Serial.println(operationState);
+          }
         }
       }
     }
 
-    if (!dataReceived) {
-      Serial.println(F("[Gateway] No se recibieron datos del nodo en el tiempo esperado."));
-    }
+    Serial.println(F("[Gateway] Finalizó el tiempo de ranura para el nodo."));
 
-    
+    // Restablecer SF a 12
     state = radio.setSpreadingFactor(12);
     if (state == RADIOLIB_ERR_NONE) {
       Serial.println(F("[Gateway] SF reseteado a SF12."));
@@ -472,4 +472,5 @@ void receiveDataFromNodes() {
     }
   }
 }
+
 

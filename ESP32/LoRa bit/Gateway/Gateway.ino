@@ -52,12 +52,12 @@ enum RadioOperation {
 RadioOperation currentOperation = RADIO_IDLE;
 
 unsigned long startTime;
-const unsigned long cycleDuration = 30000; // Duración total del ciclo en milisegundos (30 segundos)
+const unsigned long cycleDuration = 30000; 
 unsigned long cycleStartTime;
 bool scheduleSent = false;
 
 
-const unsigned long slotTime = 5000; // Tiempo de ranura en milisegundos (5 segundos)
+const unsigned long slotTime = 5000; 
 
 SX1262 radio = new Module(8, 14, 12, 13);
 
@@ -97,17 +97,17 @@ void packMessage(const Message& msg, uint8_t* buffer, uint8_t& bufferLength) {
     buffer[0] |= ((uint8_t)msg.dataType) << 2;     // Bits 3 y 2
 
     if (msg.dataType == DATA_TEMPERATURE) {
-      buffer[0] |= ((uint8_t)msg.sign) << 1;       // Bit 1: Signo
+      buffer[0] |= ((uint8_t)msg.sign) << 1;       // Bit 1: 
     }
-    // Asegurar que el bit 0 es cero
+    
     buffer[0] &= 0xFE;
 
-    // Los bits restantes son para los datos (16 bits)
-    buffer[1] = (uint8_t)(msg.dataValue >> 8);     // Byte alto
-    buffer[2] = (uint8_t)(msg.dataValue & 0xFF);   // Byte bajo
-    bufferLength = 3; // Tres bytes en total
+
+    buffer[1] = (uint8_t)(msg.dataValue >> 8);     
+    buffer[2] = (uint8_t)(msg.dataValue & 0xFF);   
+    bufferLength = 3; 
   } else {
-    // Otros tipos de mensajes
+    
   }
 }
 
@@ -137,13 +137,13 @@ void unpackMessage(const uint8_t* buffer, uint8_t bufferLength, Message& msg) {
     if (msg.dataType == DATA_TEMPERATURE) {
       msg.sign = (bool)((buffer[0] >> 1) & 0b1);              // Bit 1: Signo
     } else {
-      msg.sign = false; // No se usa para presión
+      msg.sign = false;
     }
     // Obtener el valor de los datos
     msg.dataValue = ((uint16_t)buffer[1] << 8) | buffer[2];
     msg.payloadLength = 0;
   } else {
-    // Otros tipos de mensajes
+    
   }
 }
 
@@ -195,10 +195,10 @@ void loop() {
   }
 
   if (!scheduleSent && (currentTime - cycleStartTime >= 10000)) {
-    // Enviar SCHEDULE después de 10 segundos
+
     sendSchedules();
     scheduleSent = true;
-    // Comenzar a recibir datos de los nodos
+
     receiveDataFromNodes();
     return;
   }
@@ -224,7 +224,7 @@ void loop() {
         int state = radio.readData(buffer, length);
 
         if (state == RADIOLIB_ERR_NONE) {
-          // Depuración
+          
           Serial.print(F("[Gateway][Debug] Datos recibidos - buffer[0]: 0x"));
           Serial.print(buffer[0], HEX);
           if (length > 1) {
@@ -241,7 +241,7 @@ void loop() {
           Message msg;
           unpackMessage(buffer, length, msg);
 
-          // Procesamiento del mensaje
+
           if (msg.type == ACK_MSG) {
             Serial.println(F("[Gateway] Procesando ACK recibido."));
             Serial.print(F("[Gateway] [2] Recibido ACK de Nodo ID: "));
@@ -344,7 +344,7 @@ void sendSchedules() {
     Message msg;
     msg.type = SCHEDULE;
     msg.nodeId = nodes[i].nodeId;
-    // Codificar SF (5 a 12) en 3 bits (0 a 7)
+
     msg.sf = (nodes[i].optimalSF - 5) & 0b111;
 
     uint8_t buffer[256];
@@ -354,7 +354,6 @@ void sendSchedules() {
     Serial.print(F("[Gateway][3] Enviando SCHEDULE a Nodo ID: "));
     Serial.println((uint8_t)msg.nodeId, BIN);
 
-    // Ajustar SF para coincidir con el del nodo antes de enviar
     int state = radio.setSpreadingFactor(nodes[i].optimalSF);
     if (state == RADIOLIB_ERR_NONE) {
       Serial.print(F("[Gateway] SF ajustado a SF"));
@@ -373,11 +372,9 @@ void sendSchedules() {
       Serial.println(operationState);
     }
 
-    // Esperar un pequeño tiempo entre envíos
     delay(100);
   }
 
-  // Después de enviar los SCHEDULE, comenzar a recibir datos de los nodos
   receiveDataFromNodes();
 }
 
@@ -388,7 +385,6 @@ void receiveDataFromNodes() {
     NodeInfo node = nodes[i];
     uint8_t nodeSF = node.optimalSF;
 
-    // Ajustar el SF para que coincida con el del nodo
     int state = radio.setSpreadingFactor(nodeSF);
     if (state == RADIOLIB_ERR_NONE) {
       Serial.print(F("[Gateway] SF ajustado a SF"));
@@ -398,14 +394,13 @@ void receiveDataFromNodes() {
       Serial.println(state);
     }
 
-    // Esperar el turno del nodo
     unsigned long waitTime = slotTime * (uint8_t)node.nodeId;
     Serial.print(F("[Gateway] Esperando "));
     Serial.print(waitTime / 1000);
     Serial.println(F(" segundos para recibir datos del nodo."));
     delay(waitTime);
 
-    // Iniciar recepción
+
     operationState = radio.startReceive();
     currentOperation = RADIO_RX;
     if (operationState != RADIOLIB_ERR_NONE) {
@@ -413,8 +408,7 @@ void receiveDataFromNodes() {
       Serial.println(operationState);
     }
 
-    // Esperar a que se reciban los datos
-    unsigned long receiveTimeout = 5000; // Ajustar según sea necesario
+    unsigned long receiveTimeout = 5000; 
     unsigned long receiveStartTime = millis();
     bool dataReceived = false;
 
@@ -422,7 +416,7 @@ void receiveDataFromNodes() {
       if (operationDone) {
         operationDone = false;
         if (operationState == RADIOLIB_ERR_NONE && currentOperation == RADIO_RX) {
-          // Procesar los datos recibidos
+  
           uint8_t buffer[256];
           int length = radio.getPacketLength();
           int state = radio.readData(buffer, length);
@@ -431,11 +425,11 @@ void receiveDataFromNodes() {
             Message msg;
             unpackMessage(buffer, length, msg);
 
-            // Procesar el mensaje
+          
             if (msg.type == DATA && msg.nodeId == node.nodeId) {
-              // Procesar mensaje de datos
+              
               Serial.println(F("[Gateway] Datos recibidos del nodo."));
-              // Manejar los datos
+
               if (msg.dataType == DATA_TEMPERATURE) {
                 int16_t temperature = msg.dataValue;
                 if (msg.sign) {
@@ -468,7 +462,7 @@ void receiveDataFromNodes() {
       Serial.println(F("[Gateway] No se recibieron datos del nodo en el tiempo esperado."));
     }
 
-    // Resetear SF al valor por defecto
+    
     state = radio.setSpreadingFactor(12);
     if (state == RADIOLIB_ERR_NONE) {
       Serial.println(F("[Gateway] SF reseteado a SF12."));

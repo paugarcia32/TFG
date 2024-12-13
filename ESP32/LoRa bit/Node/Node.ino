@@ -149,7 +149,7 @@ void setup() {
   }
 
   radio.setFrequency(868.0);
-  radio.setSpreadingFactor(12); 
+  radio.setSpreadingFactor(12);
   radio.setBandwidth(125.0);
   radio.setCodingRate(5);
   radio.setPreambleLength(8);
@@ -206,7 +206,7 @@ void loop() {
             Serial.println(receivedSF);
 
             // Comentamos el ajuste del SF para mantener SF12
-            
+
             int state = radio.setSpreadingFactor(receivedSF);
             if (state == RADIOLIB_ERR_NONE) {
               Serial.println(F("[Nodo] SF ajustado correctamente."));
@@ -214,7 +214,7 @@ void loop() {
               Serial.print(F("Falló al ajustar el SF, código "));
               Serial.println(state);
             }
-            
+
 
             // Calcular el tiempo para enviar datos
             scheduleReceived = true;
@@ -249,7 +249,7 @@ void sendAck() {
   Message msg;
   msg.type = ACK_MSG;
   msg.nodeId = nodeId;
-  msg.payloadLength = 0; 
+  msg.payloadLength = 0;
 
   uint8_t buffer[256];
   uint8_t bufferLength;
