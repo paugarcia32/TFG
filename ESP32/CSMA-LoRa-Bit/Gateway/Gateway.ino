@@ -3,7 +3,7 @@
 
 enum MessageType : uint8_t {
   BEACON = 0b00,
-  ACK_MSG = 0b01,
+  REQUEST = 0b01,
   SCHEDULE = 0b10,
   DATA = 0b11
 };
@@ -80,7 +80,7 @@ void packMessage(const Message& msg, uint8_t* buffer, uint8_t& bufferLength) {
     buffer[0] |= ((uint8_t)msg.type) << 6; // Bits 7 y 6
     bufferLength = 1; // Solo un byte
   }
-  else if (msg.type == ACK_MSG) {
+  else if (msg.type == REQUEST) {
     buffer[0] |= ((uint8_t)msg.type) << 6;       // Bits 7 y 6
     buffer[0] |= ((uint8_t)msg.nodeId) << 4;     // Bits 5 y 4
     bufferLength = 1; // Solo un byte
@@ -121,7 +121,7 @@ void unpackMessage(const uint8_t* buffer, uint8_t bufferLength, Message& msg) {
   Serial.print(F("[Gateway][Debug] msg.type: "));
   Serial.println((uint8_t)msg.type, BIN);
 
-  if (msg.type == ACK_MSG) {
+  if (msg.type == REQUEST) {
     msg.nodeId = (NodeID)((buffer[0] >> 4) & 0b11); // Bits 5 y 4
     msg.payloadLength = 0;
   } else if (msg.type == SCHEDULE) {
@@ -242,9 +242,9 @@ void loop() {
           unpackMessage(buffer, length, msg);
 
 
-          if (msg.type == ACK_MSG) {
-            Serial.println(F("[Gateway] Procesando ACK recibido."));
-            Serial.print(F("[Gateway] [2] Recibido ACK de Nodo ID: "));
+          if (msg.type == REQUEST) {
+            Serial.println(F("[Gateway] Procesando REQUEST recibido."));
+            Serial.print(F("[Gateway] [2] Recibido REQUEST de Nodo ID: "));
             Serial.println((uint8_t)msg.nodeId, BIN);
 
             float rssi = radio.getRSSI();
@@ -297,7 +297,7 @@ void loop() {
               Serial.println(F(" hPa"));
             }
           } else {
-            Serial.println(F("[Gateway][404] Mensaje recibido no es ACK ni DATA."));
+            Serial.println(F("[Gateway][404] Mensaje recibido no es REQUEST ni DATA."));
           }
         } else {
           Serial.print(F("Falló al leer datos, código "));

@@ -3,7 +3,7 @@
 
 enum MessageType : uint8_t {
   BEACON = 0b00,
-  ACK_MSG = 0b01,
+  REQUEST = 0b01,
   SCHEDULE = 0b10,
   DATA = 0b11
 };
@@ -68,7 +68,7 @@ void setFlag(void) {
 }
 
 // Prototipos
-void sendAck();
+void sendRequest();
 void sendTemperature(int16_t temperature);
 void sendPressure(uint16_t pressure);
 void sendDataWithSF(uint8_t spreadingFactor);
@@ -159,8 +159,8 @@ void loop() {
           unpackMessage(buffer, length, msg);
 
           if (msg.type == BEACON) {
-            Serial.println(F("[Nodo][1] BEACON recibido, enviando ACK..."));
-            sendAck();
+            Serial.println(F("[Nodo][1] BEACON recibido, enviando REQUEST..."));
+            sendRequest();
           } else if (msg.type == SCHEDULE && msg.nodeId == nodeIdConst) {
             Serial.println(F("[Nodo][3] SCHEDULE recibido."));
             receivedSF = msg.sf + 5;
@@ -203,9 +203,9 @@ void loop() {
   }
 }
 
-void sendAck() {
+void sendRequest() {
   Message msg;
-  msg.type = ACK_MSG;
+  msg.type = REQUEST;
   msg.nodeId = nodeIdConst;
   msg.payloadLength = 0;
 
@@ -213,12 +213,12 @@ void sendAck() {
   uint8_t bufferLength;
   packMessage(msg, buffer, bufferLength);
 
-  Serial.println(F("[Nodo][2] Enviando ACK..."));
+  Serial.println(F("[Nodo][2] Enviando REQUEST..."));
   operationState = radio.transmit(buffer, bufferLength);
   if (operationState == RADIOLIB_ERR_NONE) {
-    Serial.println(F("[Nodo][2] ACK enviado con éxito."));
+    Serial.println(F("[Nodo][2] REQUEST enviado con éxito."));
   } else {
-    Serial.print(F("Falló al enviar ACK, código "));
+    Serial.print(F("Falló al enviar REQUEST, código "));
     Serial.println(operationState);
   }
 
@@ -490,7 +490,7 @@ void packMessage(const Message& msg, uint8_t* buffer, uint8_t& bufferLength) {
   if (msg.type == BEACON) {
     buffer[0] |= ((uint8_t)msg.type) << 6;
     bufferLength = 1;
-  } else if (msg.type == ACK_MSG) {
+  } else if (msg.type == REQUEST) {
     buffer[0] |= ((uint8_t)msg.type) << 6;
     buffer[0] |= ((uint8_t)msg.nodeId) << 4;
     bufferLength = 1;
@@ -536,7 +536,7 @@ void unpackMessage(const uint8_t* buffer, uint8_t bufferLength, Message& msg) {
   Serial.print(F("[Nodo][Debug] msg.type: "));
   Serial.println((uint8_t)msg.type, BIN);
 
-  if (msg.type == ACK_MSG) {
+  if (msg.type == REQUEST) {
     msg.nodeId = (NodeID)((buffer[0] >> 4) & 0b11);
     msg.payloadLength = 0;
   } else if (msg.type == SCHEDULE) {
