@@ -13,6 +13,11 @@ enum DataMessageType : uint8_t {
   DATA_PRESSURE = 0b01
 };
 
+enum RequestMessageType : uint8_t {
+  BEACON_REQ = 0b00,
+  DATA_REQ = 0b01
+};
+
 enum NodeID : uint8_t {
   NODE_0 = 0b00,
   NODE_1 = 0b01,
@@ -123,6 +128,12 @@ void unpackMessage(const uint8_t* buffer, uint8_t bufferLength, Message& msg) {
 
   if (msg.type == REQUEST) {
     msg.nodeId = (NodeID)((buffer[0] >> 4) & 0b11); // Bits 5 y 4
+    msg.dataType = (RequestMessageType)((buffer[0] >> 2) & 0b11); // Bits 3 y 2
+    if (msg.dataType == BEACON_REQ) {
+      
+    } else if (msg.dataType == DATA_REQ){
+      
+    }
     msg.payloadLength = 0;
   } else if (msg.type == SCHEDULE) {
     msg.nodeId = (NodeID)((buffer[0] >> 4) & 0b11); // Bits 5 y 4
