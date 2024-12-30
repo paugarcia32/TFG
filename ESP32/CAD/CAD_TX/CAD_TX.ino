@@ -88,7 +88,7 @@ void setup() {
 
   Serial.println("[TX] Iniciando...");
 
-  int state = radio.begin(868.0, 125.0, 12, 5); 
+  int state = radio.begin(868.0, 125.0, 7, 5); 
 
   if (state == RADIOLIB_ERR_NONE) {
     Serial.println("[TX] Radio inicializada correctamente.");
