@@ -1,0 +1,43 @@
+Timestamp,Source,Message
+1735575411.2198625,TX,[TX] Iniciando...
+1735575411.2720778,TX,[TX] Radio inicializada correctamente.
+1735575416.2721128,TX,[TX] Enviando -> Hola mundo #0
+1735575416.9210474,RX,[RX] Paquete recibido -> Hola mundo #0
+1735575421.9055588,TX,[TX] Enviando -> Hola mundo #1
+1735575422.55575,RX,[RX] Paquete recibido -> Hola mundo #1
+1735575427.5404081,TX,[TX] Enviando -> Hola mundo #2
+1735575428.1898015,RX,[RX] Paquete recibido -> Hola mundo #2
+1735575433.1745448,TX,[TX] Enviando -> Hola mundo #3
+1735575433.82392,RX,[RX] Paquete recibido -> Hola mundo #3
+1735575438.8084872,TX,[TX] Enviando -> Hola mundo #4
+1735575439.458059,RX,[RX] Paquete recibido -> Hola mundo #4
+1735575444.4423265,TX,[TX] Enviando -> Hola mundo #5
+1735575445.09207,RX,[RX] Paquete recibido -> Hola mundo #5
+1735575450.0771108,TX,[TX] Enviando -> Hola mundo #6
+1735575450.7258737,RX,[RX] Paquete recibido -> Hola mundo #6
+1735575455.7106063,TX,[TX] Enviando -> Hola mundo #7
+1735575456.360537,RX,[RX] Paquete recibido -> Hola mundo #7
+1735575461.344797,TX,[TX] Enviando -> Hola mundo #8
+1735575461.9949965,RX,[RX] Paquete recibido -> Hola mundo #8
+1735575466.9797056,TX,[TX] Enviando -> Hola mundo #9
+1735575467.6298816,RX,[RX] Paquete recibido -> Hola mundo #9
+1735575472.6129594,TX,[TX] Enviando -> Hola mundo #10
+1735575473.3456128,RX,[RX] Paquete recibido -> Hola mundo #10
+1735575478.3305132,TX,[TX] Enviando -> Hola mundo #11
+1735575479.06173,RX,[RX] Paquete recibido -> Hola mundo #11
+1735575484.0466573,TX,[TX] Enviando -> Hola mundo #12
+1735575484.7778986,RX,[RX] Paquete recibido -> Hola mundo #12
+1735575489.7627318,TX,[TX] Enviando -> Hola mundo #13
+1735575490.4936728,RX,[RX] Paquete recibido -> Hola mundo #13
+1735575495.4785686,TX,[TX] Enviando -> Hola mundo #14
+1735575496.2106354,RX,[RX] Paquete recibido -> Hola mundo #14
+1735575501.1944377,TX,[TX] Enviando -> Hola mundo #15
+1735575501.9267268,RX,[RX] Paquete recibido -> Hola mundo #15
+1735575506.911488,TX,[TX] Enviando -> Hola mundo #16
+1735575507.642222,RX,[RX] Paquete recibido -> Hola mundo #16
+1735575512.627077,TX,[TX] Enviando -> Hola mundo #17
+1735575513.3589404,RX,[RX] Paquete recibido -> Hola mundo #17
+1735575518.343221,TX,[TX] Enviando -> Hola mundo #18
+1735575519.0746639,RX,[RX] Paquete recibido -> Hola mundo #18
+1735575524.0599978,TX,[TX] Enviando -> Hola mundo #19
+1735575524.7907183,RX,[RX] Paquete recibido -> Hola mundo #19

@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-CSV_FILE = 'communication_log_SF8.csv'
+CSV_FILE = 'communication_log_SF12.csv'
 
 if not os.path.exists(CSV_FILE):
     print(f"El archivo {CSV_FILE} no existe. Creando uno vacío...")
