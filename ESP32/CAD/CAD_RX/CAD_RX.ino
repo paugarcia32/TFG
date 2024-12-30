@@ -32,7 +32,7 @@ void setup() {
   while(!Serial);
 
 
-  int state = radio.begin(868.0, 125.0, 10, 5);
+  int state = radio.begin(868.0, 125.0, 8, 5);
   if (state != RADIOLIB_ERR_NONE) {
     Serial.print("[RX] Error al inicializar la radio. Código: ");
     Serial.println(state);
@@ -62,13 +62,9 @@ void loop() {
       int state = radio.readData(str);
 
       if (state == RADIOLIB_ERR_NONE) {
-        // Solo imprimimos lo relevante: el mensaje recibido, RSSI y SNR
         Serial.print("[RX] Paquete recibido -> ");
         Serial.println(str);
-
-
       } else {
-        // Error al recibir
         Serial.print("[RX] Error al leer paquete. Código: ");
         Serial.println(state);
       }
