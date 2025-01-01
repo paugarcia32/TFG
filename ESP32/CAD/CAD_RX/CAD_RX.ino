@@ -32,7 +32,7 @@ void setup() {
   while(!Serial);
 
 
-  int state = radio.begin(868.0, 125.0, 12, 5);
+  int state = radio.begin(868.0, 125.0, 7, 5);
   if (state != RADIOLIB_ERR_NONE) {
     Serial.print("[RX] Error al inicializar la radio. Código: ");
     Serial.println(state);

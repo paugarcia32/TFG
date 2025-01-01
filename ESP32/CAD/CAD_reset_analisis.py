@@ -1,20 +1,15 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Archivo CSV generado por el script anterior
 CSV_FILE = 'cad_operational_data.csv'
 
-# Leer los datos del archivo CSV
 data = pd.read_csv(CSV_FILE)
 
-# Filtrar eventos de recepción y CAD operativo
 received_data = data[data['Event'] == 'Mensaje recibido']
 cad_data = data[data['Event'] == 'CAD operativo']
 
-# Inicializar lista para guardar tiempos de reactivación
 time_differences = []
 
-# Iterar sobre cada recepción y encontrar el siguiente CAD operativo
 for _, received_row in received_data.iterrows():
     received_time = float(received_row['Value'])
     next_cad = cad_data[cad_data['Value'].astype(float) > received_time]
@@ -23,18 +18,15 @@ for _, received_row in received_data.iterrows():
         cad_time = float(next_cad.iloc[0]['Value'])
         time_differences.append(cad_time - received_time)
 
-# Mostrar resultados
 if time_differences:
     average_time = sum(time_differences) / len(time_differences)
     print(f"Se calcularon {len(time_differences)} tiempos de reactivación del CAD.")
     print(f"Tiempo promedio de reactivación del CAD: {average_time:.4f} ms\n")
 
-    # Mostrar todas las diferencias
     print("Tiempos de reactivación del CAD:")
     for idx, diff in enumerate(time_differences):
         print(f"{idx + 1}: {diff:.4f} ms")
 
-    # Graficar los tiempos de reactivación
     plt.figure(figsize=(10, 6))
     plt.plot(time_differences, marker='o', linestyle='-', label='Tiempo de reactivación del CAD')
     plt.title('Tiempos de reactivación del CAD', fontsize=14)

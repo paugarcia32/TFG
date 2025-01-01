@@ -6,10 +6,10 @@ import time
 from threading import Thread
 
 TX_PORT = 'COM3'
-RX_PORT = 'COM6'
+RX_PORT = 'COM7'
 BAUD_RATE = 115200
 
-CSV_FILE = 'communication_log_SF12.csv'
+CSV_FILE = 'CAD_error_rate_10s.csv'
 
 if not os.path.exists(CSV_FILE):
     print(f"El archivo {CSV_FILE} no existe. Creando uno vacío...")
